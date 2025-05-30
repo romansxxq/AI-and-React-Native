@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, Text, View, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AddTaskForm } from '@/components/AddTaskForm';
 
 type Todo = {
@@ -10,26 +11,43 @@ type Todo = {
   priority?: 'low' | 'medium' | 'high';
 };
 
+const STORAGE_KEY = 'TODOS';
+
 export default function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
 
   useEffect(() => {
-    fetch('https://dummyjson.com/todos')
-      .then(res => res.json())
-      .then(data => setTodos(data.todos))
-      .catch(err => console.error(err));
+    const loadTodos = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          setTodos(JSON.parse(stored));
+        } else {
+          const res = await fetch('https://dummyjson.com/todos');
+          const data = await res.json();
+          setTodos(data.todos);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    loadTodos();
   }, []);
 
-const handleAddTask = (task: { title: string; date: string; priority: 'low' | 'medium' | 'high' }) => {
-  const newTask: Todo = {
-    id: Date.now(),
-    todo: task.title,
-    completed: false,
-    date: task.date,
-    priority: task.priority,
+  useEffect(() => {
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+  }, [todos]);
+
+  const handleAddTask = (task: { title: string; date: string; priority: 'low' | 'medium' | 'high' }) => {
+    const newTask: Todo = {
+      id: Date.now(),
+      todo: task.title,
+      completed: false,
+      date: task.date,
+      priority: task.priority,
+    };
+    setTodos(prevTodos => [newTask, ...prevTodos]);
   };
-  setTodos(prevTodos => [newTask, ...prevTodos]);
-};
 
   const renderItem = ({ item }: any) => (
     <View style={styles.item}>
@@ -53,7 +71,6 @@ const handleAddTask = (task: { title: string; date: string; priority: 'low' | 'm
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

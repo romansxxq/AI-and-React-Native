@@ -1,15 +1,19 @@
 import React from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { View, TextInput, Button, StyleSheet, Text } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 
-type TaskFormData = {
+type FormData = {
   title: string;
   date: string;
   priority: 'low' | 'medium' | 'high';
 };
 
-export const AddTaskForm = () => {
-  const { control, handleSubmit, reset } = useForm<TaskFormData>({
+type Props = {
+  onAdd: (task: FormData) => void;
+};
+
+export const AddTaskForm: React.FC<Props> = ({ onAdd }) => {
+  const { control, handleSubmit, reset } = useForm<FormData>({
     defaultValues: {
       title: '',
       date: '',
@@ -17,80 +21,75 @@ export const AddTaskForm = () => {
     },
   });
 
-  const onSubmit = (data: TaskFormData) => {
-    const taskWithStatus = {
-      ...data,
-      status: 'to-do', // статус за замовчуванням
-    };
-    console.log('New Task:', taskWithStatus);
+  const onSubmit = (data: FormData) => {
+    onAdd(data);
     reset();
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>Title</Text>
+    <View style={styles.form}>
+      <Text>Назва</Text>
       <Controller
         control={control}
         name="title"
+        rules={{ required: true }}
         render={({ field: { onChange, value } }) => (
           <TextInput
             style={styles.input}
-            onChangeText={onChange}
+            placeholder="Введіть назву"
             value={value}
-            placeholder="Enter task title"
+            onChangeText={onChange}
           />
         )}
       />
-
-      <Text style={styles.label}>Date</Text>
+      <Text>Дата</Text>
       <Controller
         control={control}
         name="date"
+        rules={{ required: true }}
         render={({ field: { onChange, value } }) => (
           <TextInput
             style={styles.input}
-            onChangeText={onChange}
-            value={value}
             placeholder="YYYY-MM-DD"
+            value={value}
+            onChangeText={onChange}
           />
         )}
       />
-
-      <Text style={styles.label}>Priority</Text>
+      <Text>Пріорітет</Text>
       <Controller
         control={control}
         name="priority"
         render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            onChangeText={onChange}
-            value={value}
-            placeholder="low, medium or high"
-          />
+          <View style={styles.priorityRow}>
+            {['low', 'medium', 'high'].map((level) => (
+              <Button
+                key={level}
+                title={level}
+                color={value === level ? '#007bff' : '#aaa'}
+                onPress={() => onChange(level)}
+              />
+            ))}
+          </View>
         )}
       />
-
-      <Button title="Add Task" onPress={handleSubmit(onSubmit)} />
+      <Button title="Додати" onPress={handleSubmit(onSubmit)} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 10,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  label: {
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
+  form: { marginBottom: 20 },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 6,
     padding: 8,
+    marginBottom: 10,
+  },
+  priorityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
 });
