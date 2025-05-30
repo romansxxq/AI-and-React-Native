@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, Text, View, StyleSheet } from 'react-native';
+import { AddTaskForm } from '@/components/AddTaskForm';
 
 type Todo = {
   id: number;
   todo: string;
   completed: boolean;
+  date?: string;
+  priority?: 'low' | 'medium' | 'high';
 };
 
 export default function App() {
@@ -17,10 +20,23 @@ export default function App() {
       .catch(err => console.error(err));
   }, []);
 
+const handleAddTask = (task: { title: string; date: string; priority: 'low' | 'medium' | 'high' }) => {
+  const newTask: Todo = {
+    id: Date.now(),
+    todo: task.title,
+    completed: false,
+    date: task.date,
+    priority: task.priority,
+  };
+  setTodos(prevTodos => [newTask, ...prevTodos]);
+};
+
   const renderItem = ({ item }: any) => (
     <View style={styles.item}>
       <Text style={styles.title}>{item.todo}</Text>
       <Text>{item.completed ? '✅ Done' : '⌛ Not done'}</Text>
+      {item.date && <Text>Дата: {item.date}</Text>}
+      {item.priority && <Text>Пріорітет: {item.priority}</Text>}
     </View>
   );
 
@@ -28,6 +44,7 @@ export default function App() {
     <View style={styles.container}>
       <Text style={styles.header}>ODOT List</Text>
       <Text style={styles.date}>{new Date().toLocaleString()}</Text>
+      <AddTaskForm onAdd={handleAddTask} />
       <FlatList
         data={todos}
         renderItem={renderItem}
